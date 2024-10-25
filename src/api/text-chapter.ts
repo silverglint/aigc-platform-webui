@@ -71,6 +71,7 @@ export interface ChapterInfo extends AudioRoleInfo {
   sentIndex: number;
   textId: string;
   text: string;
+  textMood: string;
   textLang: string;
   textSort: number;
   dialogueFlag: boolean;
@@ -185,6 +186,7 @@ export function roleInference(url: string,
 
 export interface TextRoleInference {
   textIndex: string;
+  text: string;
   role: string;
   gender: string;
   age: string;
@@ -194,7 +196,8 @@ export interface TextRoleInference {
 export interface RoleInferenceData {
   content: string;
   lines: string;
-  textRoleInferences: TextRoleInference[];
+  textRoleMoods: TextRoleInference[];
+  roles: AudioRoleInfo[];
 }
 
 export function queryRoleInferenceCache(params: { projectId: string, chapterId: string }) {
@@ -315,7 +318,7 @@ export function getChapterSubtitle(params: ChapterParam) {
 
 export interface ChapterBatchOperator extends ChapterParam {
   chapterInfoIds: number[];
-  operatorType: 'dialogue_markup' | 'delete';
+  operatorType: 'dialogue_markup' | 'delete' | 'text_combine';
   booleanValue?: boolean;
 }
 
