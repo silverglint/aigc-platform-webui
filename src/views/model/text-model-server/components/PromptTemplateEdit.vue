@@ -79,6 +79,8 @@ watch(() => props.visible,
       >
         <a-select v-model="promptTemplate.templateGroup">
           <a-option label="小说角色推理" value="novel_role_inference"/>
+          <a-option label="角色形象提取" value="drama_character_role_inference"/>
+          <a-option label="图片提示词" value="drama_prompt_inference"/>
         </a-select>
       </a-form-item>
     </a-form>

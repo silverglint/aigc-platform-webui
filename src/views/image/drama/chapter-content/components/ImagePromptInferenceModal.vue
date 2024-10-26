@@ -49,7 +49,7 @@ const handleQueryRoleInferenceCache = async () => {
 
 const handleQueryPromptTemplates = async () => {
   const {data} = await queryPromptTemplates({
-    templateGroup: 'drama_character_role_inference'
+    templateGroup: 'drama_prompt_inference'
   });
   promptTemplates.value = data;
   currentPromptTemplate.value = data.find((item) => item.isDefault) ?? {};
@@ -79,16 +79,14 @@ watch(() => props.visible,
 
 <template>
   <div>
-    <a-modal
-        v-model:visible="showModal"
-        title="角色推理"
-        :width="960"
-        :unmount-on-close="true"
-        draggable
-        @before-ok="handleBeforeOk"
-        @close="close"
-        @cancel="close"
-    >
+    <a-modal v-model:visible="showModal"
+             title="图片提示词推理"
+             :width="960"
+             :unmount-on-close="true"
+             draggable
+             @before-ok="handleBeforeOk"
+             @close="close"
+             @cancel="close">
       <a-space direction="vertical" size="medium" style="width: 100%">
         <a-card>
           <div style="font-size: 14px; margin-bottom: 8px">

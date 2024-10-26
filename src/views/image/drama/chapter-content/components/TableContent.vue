@@ -2,17 +2,19 @@
 import {onBeforeUnmount, onMounted, PropType, ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import {Message, Modal, Notification} from "@arco-design/web-vue";
-import {ROLE_CHANGE} from "@/types/event-types.ts";
-import {AudioModelInfoKey} from "@/api/model.ts";
+import {COMMON_ROLE_CHANGE, ROLE_CHANGE} from "@/types/event-types.ts";
 import {
   addChapterInfo,
-  audioModelChange,
   batchOperator,
   chapterInfos as queryChapterInfoList,
-  deleteChapterInfo, deleteDramaInfoInference,
+  commonRoles as queryCommonRoles,
+  deleteChapterInfo,
+  deleteDramaInfoInference,
   DramaInfo,
   DramaInfoInference,
   ImageContentConfig,
+  ImageRole,
+  roles as queryRoles,
   saveDramaInfoInference,
   startCreateAudio,
   updateDramaInfo
@@ -54,6 +56,7 @@ const conditionSelectVisible = ref(false);
 const modelSelectVisible = ref<boolean>(false);
 const roleChangeModelVisible = ref<boolean>(false)
 const audioParamsChangeModelVisible = ref<boolean>(false)
+const roleOptions = ref<ImageRole[]>([])
 
 const currentChapterInfo = ref<DramaInfo>({} as DramaInfo);
 
@@ -73,21 +76,30 @@ const handleQueryChapterInfo = async () => {
   });
 }
 
-const onRoleChange = () => {
-  emitter?.emit(ROLE_CHANGE);
+const handleQueryRoles = async () => {
+  const res1 = await queryRoles({
+    projectId: route.query.projectId as string,
+    chapterId: route.query.chapterId as string,
+  })
+  roleOptions.value = []
+  roleOptions.value.push(...res1.data.map(o => {
+    o.isCommonRole = false
+    return o
+  }));
+
+  const res2 = await queryCommonRoles({
+    projectId: route.query.projectId as string
+  })
+  for (let i = 0; i < res2.data.length; i++) {
+    let role = res2.data[i];
+    if (roleOptions.value.findIndex(o => o.role === role.role) === -1) {
+      roleOptions.value.push(Object.assign(role, {isCommonRole: true}));
+    }
+  }
 }
 
-const modelSelect = async (modelConfig: AudioModelInfoKey) => {
-
-  const {msg} = await audioModelChange({
-    projectId: currentChapterInfo.value.projectId,
-    chapterId: currentChapterInfo.value.chapterId,
-    ...modelConfig,
-    ids: editMode.value === 'batch' ? selectedIds.value : [currentChapterInfo.value.id]
-  });
-  currentChapterInfo.value = {} as any;
-  Message.success(msg);
-  await handleQueryChapterInfo();
+const onRoleChange = () => {
+  emitter?.emit(ROLE_CHANGE);
 }
 
 const wsDataHandler = (data: any) => {
@@ -125,7 +137,7 @@ const addTextItem = async (index: number, targetIndex: number) => {
       if (target.inferences.length === 0) {
         await handleDeleteDramaInfo(target)
       }
-      emitter?.emit(ROLE_CHANGE)
+      emitter?.emit(EventTypes.chapter_info_refresh)
     } else if (index < targetIndex) {
       let change = target.inferences.shift();
       change.dramaInfoId = source.id;
@@ -134,7 +146,7 @@ const addTextItem = async (index: number, targetIndex: number) => {
       if (target.inferences.length === 0) {
         await handleDeleteDramaInfo(target)
       }
-      emitter?.emit(ROLE_CHANGE)
+      emitter?.emit(EventTypes.chapter_info_refresh)
     }
   }
 }
@@ -150,41 +162,57 @@ const removeTextItem = async (index: number, targetIndex: number) => {
         projectId: source.projectId,
         chapterId: source.chapterId,
         textSort: index,
-        role:'未知',
+        role: '未知',
         inferences: [change],
       } as any;
       await deleteDramaInfoInference(change);
       await handleAddDramaInfo(dramaInfo)
-      emitter?.emit(ROLE_CHANGE)
+      emitter?.emit(EventTypes.chapter_info_refresh)
     } else if (index < targetIndex) {
       let change = source.inferences.pop();
       let dramaInfo = {
         projectId: source.projectId,
         chapterId: source.chapterId,
         textSort: targetIndex,
-        role:'未知',
+        role: '未知',
         inferences: [change],
       } as any;
       await deleteDramaInfoInference(change);
       await handleAddDramaInfo(dramaInfo)
-      emitter?.emit(ROLE_CHANGE)
+      emitter?.emit(EventTypes.chapter_info_refresh)
     }
   }
 }
 
+const handleRoleCheck = (dramaInfo: DramaInfo, role: ImageRole, bool: boolean) => {
+  let roles = dramaInfo.role?.split(',') || []
+  if (bool) {
+    if (!roles.includes(role.role)) {
+      roles.push(role.role)
+    }
+    dramaInfo.role = roles.join(',')
+  } else {
+    let index = roles.indexOf(role.role);
+    if (index > -1) {
+      roles.splice(index, 1)
+    }
+    dramaInfo.role = roles.join(',')
+  }
+  updateDramaInfo(dramaInfo)
+}
+
 const handleAddDramaInfo = async (dramaInfo: DramaInfo) => {
-    const {msg} = await addChapterInfo(dramaInfo)
-    Message.success(msg);
-    // emitter?.emit(ROLE_CHANGE)
+  const {msg} = await addChapterInfo(dramaInfo)
+  Message.success(msg);
+  // emitter?.emit(ROLE_CHANGE)
 }
 
 const handleSaveDramaInfoInference = async (dramaInfoInference: DramaInfoInference) => {
   await saveDramaInfoInference(dramaInfoInference)
 }
 
-const handleUpdateDramaInfo = async (index: number) => {
-  const {msg} = await updateDramaInfo(dramaInfos.value[index])
-  Message.success(msg);
+const handleUpdateDramaInfo = async (dramaInfo: DramaInfo) => {
+  const {msg} = await updateDramaInfo(dramaInfo)
   // emitter?.emit(ROLE_CHANGE)
 }
 
@@ -345,12 +373,16 @@ defineExpose({
 
 onMounted(() => {
   emitter?.on(ROLE_CHANGE, handleQueryChapterInfo);
+  emitter?.on(ROLE_CHANGE, handleQueryRoles);
+  emitter?.on(COMMON_ROLE_CHANGE, handleQueryRoles);
   emitter?.on(EventTypes.chapter_info_refresh, handleQueryChapterInfo);
   emitter?.on(EventTypes.audio_generate_result, wsDataHandler);
 });
 
 onBeforeUnmount(() => {
   emitter?.off(ROLE_CHANGE, handleQueryChapterInfo);
+  emitter?.off(ROLE_CHANGE, handleQueryRoles);
+  emitter?.off(COMMON_ROLE_CHANGE, handleQueryRoles);
   emitter?.off(EventTypes.chapter_info_refresh, handleQueryChapterInfo);
   emitter?.off(EventTypes.audio_generate_result, wsDataHandler);
 });
@@ -359,6 +391,7 @@ watch(
     () => route.query.chapterId,
     async () => {
       if (route.query.chapterId) {
+        handleQueryRoles()
         await handleQueryChapterInfo()
       }
       selectedIds.value = [];
@@ -374,7 +407,7 @@ watch(
       <div v-for="(item, index) in dramaInfos"
            :key="item.id"
            class="flex bg-gray-500/5 rounded">
-        <div style="width: 100%; display: flex; align-items: center;height: 5rem;">
+        <div style="width: 100%; display: flex; align-items: center;height: 5.5rem;">
           <div v-if="props.imageContentConfig.edit"
                style="width: 24px; height: 100%;" class="text-card-left-option">
             <div style="height: 100%; display: flex; place-items: center; justify-content: center;align-items: center;">
@@ -403,7 +436,20 @@ watch(
               </a-tag>
             </div>
             <a-divider direction="vertical"/>
+            <div style="width: 140px;height: 100%;overflow: auto;display: flex;flex-wrap: wrap;gap: 5px;">
+              <a-tag bordered checkable
+                     style="display: block;flex: none;"
+                     :color="role.isCommonRole?'orange':'blue'"
+                     :checked="item.role?.split(',').indexOf(role.role)>-1"
+                     @check="(b)=>handleRoleCheck(item,role,b)"
+                     v-for="(role,i) in roleOptions"
+                     :key="i">{{ role.role }}
+              </a-tag>
+            </div>
             <a-divider direction="vertical"/>
+            <div style="width: 300px;height: 100%;overflow: auto;">
+              <a-textarea v-model="item.imagePrompt" :auto-size="{minRows: 3, maxRows: 3}"/>
+            </div>
           </div>
           <div v-if="props.imageContentConfig.edit"
                style="width: 28px; margin-right: 10px;height: 100%;display: flex;flex-direction: column;flex-wrap: wrap">

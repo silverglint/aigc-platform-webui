@@ -1,25 +1,18 @@
 <script setup lang="ts">
 import {useRoute} from "vue-router";
 import {onBeforeUnmount, onMounted, ref, watch} from "vue";
-import {roles as queryRoles, saveToCommonRole, TextRole, updateRoleModel,} from "@/api/text-chapter.ts";
+import {deleteRole, ImageRole, roles as queryRoles, saveToCommonRole,} from "@/api/image-chapter.ts";
 import {Message, Modal} from "@arco-design/web-vue";
-import AudioSelect from '@/views/audio-select/index.vue'
-import RoleDelete from "./RoleDelete.vue";
 import {COMMON_ROLE_CHANGE, ROLE_CHANGE} from "@/types/event-types.ts";
-import {AudioModelInfo} from "@/api/model.ts";
-import {voiceNameFormat} from "@/utils/model-util.ts";
-import RoleEdit from "@/views/text/novel/chapter-content/components/RoleEdit.vue";
-import {COSY_VOICE} from "@/types/model-types.ts";
+import RoleEdit from "@/views/image/drama/chapter-content/components/RoleEdit.vue";
 import {EventTypes} from "@/types/global.ts";
 import emitter from "@/mitt";
 
 const route = useRoute();
 
-const modelSelectVisible = ref<boolean>(false);
 const roleRenameModalVisible = ref<boolean>(false);
-const roleDeleteModalVisible = ref<boolean>(false);
 
-const roles = ref<TextRole[]>([])
+const roles = ref<ImageRole[]>([])
 
 const handleQueryRoles = async () => {
   const {data} = await queryRoles({
@@ -36,34 +29,29 @@ const openAllRule = () => {
       : ruleActiveKey.value = [...Array(roles.value.length).keys()]
 }
 
-const currentRole = ref<TextRole>({} as TextRole);
-const roleSelectModel = (role: TextRole) => {
-  currentRole.value = role;
-  modelSelectVisible.value = true
-}
+const currentRole = ref<ImageRole>({} as ImageRole);
 
-const modelSelect = async (modelConfig: AudioModelInfo) => {
-  const {msg} = await updateRoleModel({
-    projectId: currentRole.value.projectId,
-    chapterId: currentRole.value.chapterId,
-    ...modelConfig,
-    ids: [currentRole.value.id]
-  })
-  Message.success(msg);
-  emitter?.emit(ROLE_CHANGE);
-}
-
-const onRoleRename = (role: TextRole) => {
+const onRoleRename = (role: ImageRole) => {
   currentRole.value = role;
   roleRenameModalVisible.value = true;
 }
 
-const onDeleteRole = (role: TextRole) => {
-  currentRole.value = role;
-  roleDeleteModalVisible.value = true;
+const onDeleteRole = (role: ImageRole) => {
+  Modal.error({
+    title: `确认删除角色[${role.role}]?`,
+    content: '',
+    async onOk() {
+      const {msg} = await deleteRole({
+        ...role,
+        projectId: route.query.projectId as string,
+      });
+      Message.success(msg);
+      emitter.emit(ROLE_CHANGE)
+    },
+  })
 }
 
-const onSaveToCommonRole = async (role: TextRole) => {
+const onSaveToCommonRole = async (role: ImageRole) => {
   const {data, msg} = await saveToCommonRole(role)
   if (!data) {
     Modal.confirm({
@@ -141,120 +129,16 @@ watch(
         <a-collapse-item v-for="(item, index) in roles" :key="index">
           <template #header>
             <span>{{ `${item.role}(${item.roleCount})` }}</span>
-            <span style="margin-left: 10px; color: #707070">性别: </span>
-            <span
-                style="margin-left: 10px"
-            >
-              {{ item.gender ?? '未知' }}
-            </span>
           </template>
           <div>
-            <a-descriptions
-                :column="1"
-                size="medium"
-            >
-              <a-descriptions-item label="类型">
-                {{ item.amType }}
-              </a-descriptions-item>
-              <a-descriptions-item
-                  v-if="['gpt-sovits'].includes(item.amType)"
-                  label="模型"
-              >
-                <a-typography-text ellipsis>
-                  {{ `${item.amMfGroup}/${item.amMfRole}` }}
-                </a-typography-text>
-              </a-descriptions-item>
-              <a-descriptions-item
-                  v-if="['gpt-sovits'].includes(item.amType)"
-                  label="配置"
-              >
-                <a-typography-text ellipsis>
-                  {{
-                    item.amMcId === '-1' || !item.amMcName
-                        ? '空'
-                        : `${item.amMcName}`
-                  }}
-                </a-typography-text>
-              </a-descriptions-item>
-              <a-descriptions-item
-                  v-if="['gpt-sovits'].includes(item.amType)"
-                  label="音频"
-              >
-                <a-typography-text ellipsis>
-                  {{
-                    `${item.amPaGroup}/${item.amPaRole}/${item.amPaMood}/${item.amPaAudio}`
-                  }}
-                </a-typography-text>
-              </a-descriptions-item>
-
-              <a-descriptions-item
-                  v-if="['fish-speech'].includes(item.amType)"
-                  label="配置"
-              >
-                <a-typography-text ellipsis>
-                  {{
-                    item.amMcId === '-1' || !item.amMcName
-                        ? '空'
-                        : `${item.amMcName}`
-                  }}
-                </a-typography-text>
-              </a-descriptions-item>
-              <a-descriptions-item
-                  v-if="['fish-speech'].includes(item.amType)"
-                  label="音频"
-              >
-                <a-typography-text ellipsis>
-                  {{
-                    `${item.amPaGroup}/${item.amPaRole}/${item.amPaMood}/${item.amPaAudio}`
-                  }}
-                </a-typography-text>
-              </a-descriptions-item>
-
-              <a-descriptions-item
-                  v-if="['chat-tts'].includes(item.amType)"
-                  label="配置"
-              >
-                <a-typography-text ellipsis>
-                  {{ item.amMcName }}
-                </a-typography-text>
-              </a-descriptions-item>
-
-              <a-descriptions-item
-                  v-if="['edge-tts'].includes(item.amType)"
-                  label="配置"
-              >
-                <a-typography-text ellipsis>
-                  {{ voiceNameFormat(item.amMcName) }}
-                </a-typography-text>
-              </a-descriptions-item>
-
-              <a-descriptions-item
-                  v-if="[COSY_VOICE].includes(item.amType) && JSON.parse(item.amMcParamsJson)?.mode !== 'custom'"
-                  label="角色"
-              >
-                <a-typography-text ellipsis>
-                  {{ JSON.parse(item.amMcParamsJson)?.role }}
-                </a-typography-text>
-              </a-descriptions-item>
-              <a-descriptions-item
-                  v-if="[COSY_VOICE].includes(item.amType) && JSON.parse(item.amMcParamsJson)?.mode === 'custom'"
-                  label="音频"
-              >
-                <a-typography-text ellipsis>
-                  {{
-                    `${item.amPaGroup}/${item.amPaRole}/${item.amPaMood}/${item.amPaAudio}`
-                  }}
-                </a-typography-text>
-              </a-descriptions-item>
-              <a-descriptions-item
-                  v-if="[COSY_VOICE].includes(item.amType) && JSON.parse(item.amMcParamsJson)?.mode === 'advanced'"
-                  label="提示"
-              >
-                <a-typography-text ellipsis>
-                  {{ JSON.parse(item.amMcParamsJson)?.instruct }}
-                </a-typography-text>
-              </a-descriptions-item>
-            </a-descriptions>
+            <div>
+              <a-descriptions :column="1"
+                              size="medium">
+                <a-descriptions-item label="提示词">
+                  {{ item.imagePrompt }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </div>
             <div style="text-align: left">
               <a-space wrap>
                 <a-dropdown-button
@@ -271,13 +155,6 @@ watch(
                     <a-doption @click="onSaveToCommonRole(item)">保存预置</a-doption>
                   </template>
                 </a-dropdown-button>
-                <a-button
-                    type="outline"
-                    size="small"
-                    @click="roleSelectModel(item)"
-                >
-                  选择模型
-                </a-button>
               </a-space>
             </div>
           </div>
@@ -285,18 +162,8 @@ watch(
       </a-collapse>
 
     </div>
-    <audio-select
-        v-model:visible="modelSelectVisible"
-        :audio-model-info="currentRole"
-        @model-select="modelSelect"
-    />
     <role-edit
         v-model:visible="roleRenameModalVisible"
-        :role="currentRole"
-        :role-type="'role'"
-    />
-    <role-delete
-        v-model:visible="roleDeleteModalVisible"
         :role="currentRole"
         :role-type="'role'"
     />

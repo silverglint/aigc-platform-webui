@@ -58,7 +58,7 @@ const onDeleteRole = (role: ImageRole) => {
         projectId: route.query.projectId as string,
       });
       Message.success(msg);
-      refresh();
+      emitter.emit(COMMON_ROLE_CHANGE)
     },
   })
 }

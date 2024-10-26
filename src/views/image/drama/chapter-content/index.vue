@@ -6,8 +6,7 @@ import TableContent from "./components/TableContent.vue";
 import CommonRole from "./components/CommonRole.vue";
 import TextRole from "./components/TextRole.vue";
 import {Message} from "@arco-design/web-vue";
-import {ROLE_CHANGE} from "@/types/event-types.ts";
-import {getTextChapter, roleInference, stopCreateAudio, ImageDrama, ImageContentConfig} from "@/api/image-chapter.ts";
+import {getTextChapter, ImageContentConfig, ImageDrama, roleInference, stopCreateAudio} from "@/api/image-chapter.ts";
 import {AudioTaskState, EventTypes, TextProjectType} from "@/types/global.ts";
 import AudioPreview from "@/views/image/drama/chapter-content/components/AudioPreview.vue";
 import {getImageProject, ImageProject} from "@/api/image-project.ts";
@@ -15,6 +14,7 @@ import ChapterEditModal from "@/views/image/drama/chapter-title/components/Chapt
 import GlobalWebsocketService from "@/services/globalWebsocketService.ts";
 import emitter from "@/mitt";
 import RoleInferenceModal from "@/views/image/drama/chapter-content/components/RoleInferenceModal.vue";
+import ImagePromptInferenceModal from "@/views/image/drama/chapter-content/components/ImagePromptInferenceModal.vue";
 
 const route = useRoute();
 const {loading, setLoading} = useLoading();
@@ -26,6 +26,7 @@ const imageContentConfig = ref<ImageContentConfig>({} as ImageContentConfig)
 const audioPreviewModelVisible = ref<boolean>(false);
 const chapterEditModalVisible = ref<boolean>(false);
 const roleInferenceModalVisible = ref<boolean>(false);
+const imagePromptInferenceModalVisible = ref<boolean>(false);
 const playStartIndex = ref<string>('')
 
 const tableContentRef = ref<
@@ -45,7 +46,7 @@ const tableContentRef = ref<
 >(null);
 
 const refresh = () => {
-  emitter?.emit(ROLE_CHANGE);
+  emitter?.emit(EventTypes.chapter_info_refresh);
 }
 
 const aiResultText = ref<string>('')
@@ -84,7 +85,28 @@ const handleAiInference = (param: any) => {
   try {
     setLoading(true);
     roleInference(
-        '/api/sse/textChapter/roleInference',
+        '/api/sse/imageDrama/roleInference',
+        {
+          projectId: route.query.projectId as string,
+          chapterId: route.query.chapterId as string,
+          ...param,
+        },
+        handleAiInferenceMessage,
+        handleAiInferenceDone,
+        handleAiInferenceError,
+        handleAiInferenceTimeout
+    )
+    aiResultModalVisible.value = false;
+  } catch (err) {
+    setLoading(false);
+  }
+};
+
+const handleImageInference = (param: any) => {
+  try {
+    setLoading(true);
+    roleInference(
+        '/api/sse/imageDrama/promptInference',
         {
           projectId: route.query.projectId as string,
           chapterId: route.query.chapterId as string,
@@ -182,29 +204,31 @@ watch(
         <div style="width: 90%; display: flex">
           <a-space size="large" align="start">
             <div v-if="route.query.projectType === TextProjectType.short_text">
-              <a-button
-                  type="primary"
-                  size="small"
-                  @click="chapterEditModalVisible = true"
-              >
+              <a-button type="primary"
+                        size="small"
+                        @click="chapterEditModalVisible = true">
                 章节编辑
               </a-button>
             </div>
             <div v-if="textProject?.projectType !== TextProjectType.format_text">
-              <a-button
-                  type="primary"
-                  :loading="loading"
-                  size="small"
-                  @click="() => (roleInferenceModalVisible = true)"
-              >
+              <a-button type="primary"
+                        :loading="loading"
+                        size="small"
+                        @click="() => (roleInferenceModalVisible = true)">
                 角色推理
               </a-button>
             </div>
             <div>
-              <a-dropdown-button
-                  type="primary"
-                  size="small"
-              >
+              <a-button type="primary"
+                        :loading="loading"
+                        size="small"
+                        @click="() => (imagePromptInferenceModalVisible = true)">
+                图片提示词
+              </a-button>
+            </div>
+            <div>
+              <a-dropdown-button type="primary"
+                                 size="small">
                 音频生成
                 <template #icon>
                   <icon-down/>
@@ -368,40 +392,28 @@ watch(
     <div style="display: flex; margin-top: 10px">
       <div style="flex: 1"
            :style="route.query.projectType as string === TextProjectType.long_text && {marginLeft: '10px'}">
-        <a-scrollbar
-            style="max-height: calc(100vh - 90px); padding-right: 10px; overflow: auto"
-        >
-          <table-content
-              ref="tableContentRef"
-              v-model:image-content-config="imageContentConfig"
-              v-model:selected-indexes="selectedIndexes"
-              v-model:creating-ids="creatingIds"
-          />
+        <a-scrollbar style="max-height: calc(100vh - 90px); padding-right: 10px; overflow: auto">
+          <table-content ref="tableContentRef"
+                         v-model:image-content-config="imageContentConfig"
+                         v-model:selected-indexes="selectedIndexes"
+                         v-model:creating-ids="creatingIds"/>
         </a-scrollbar>
       </div>
       <a-divider direction="vertical" style="margin: 0"/>
       <div style="width: 20%; margin-left: 10px">
-        <a-scrollbar
-            style="max-height: calc(100vh - 90px); overflow: auto"
-        >
+        <a-scrollbar style="max-height: calc(100vh - 90px); overflow: auto">
           <a-card :bordered="false" style="border-radius: 8px" :body-style="{ padding: '0 10px 0 0' }">
-            <n-tabs
-                default-value="1"
-                justify-content="space-evenly"
-                type="line"
-            >
-              <n-tab-pane
-                  name="1"
-                  tab="文中角色"
-                  display-directive="show:lazy"
-              >
+            <n-tabs default-value="1"
+                    justify-content="space-evenly"
+                    type="line">
+              <n-tab-pane name="1"
+                          tab="文中角色"
+                          display-directive="show:lazy">
                 <text-role/>
               </n-tab-pane>
-              <n-tab-pane
-                  name="2"
-                  tab="预置角色"
-                  display-directive="show:lazy"
-              >
+              <n-tab-pane name="2"
+                          tab="预置角色"
+                          display-directive="show:lazy">
                 <common-role/>
               </n-tab-pane>
             </n-tabs>
@@ -411,13 +423,14 @@ watch(
     </div>
     <role-inference-modal
         v-model:visible="roleInferenceModalVisible"
-        @success="handleAiInference"
-    />
+        @success="handleAiInference"/>
+    <image-prompt-inference-modal
+        v-model:visible="imagePromptInferenceModalVisible"
+        @success="handleImageInference"/>
     <audio-preview v-model:visible="audioPreviewModelVisible"/>
     <chapter-edit-modal
         v-model:visible="chapterEditModalVisible"
-        :chapter-id="route.query.chapterId as string"
-    />
+        :chapter-id="route.query.chapterId as string"/>
   </div>
 </template>
 

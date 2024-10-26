@@ -52,6 +52,7 @@ export interface ImageRole {
   coverCommonRole: boolean;
   role: string;
   imagePrompt: string;
+  isCommonRole?: boolean;
 }
 
 export interface PolyphonicInfo {
@@ -84,6 +85,8 @@ export interface DramaInfo {
   textId: string;
   text: string[];
   textSort: number;
+  role: string;
+  imagePrompt: string;
   imageTaskState: number;
   inferences: DramaInfoInference[];
 }
@@ -158,6 +161,10 @@ export function updateCommonRole(params: ImageRole) {
 
 export function deleteCommonRole(params: ImageRole) {
   return axios.post('/api/imageDrama/deleteCommonRole', params);
+}
+
+export function deleteRole(params: ImageRole) {
+  return axios.post('/api/imageDrama/deleteRole', params);
 }
 
 export function roleInference(url: string,
