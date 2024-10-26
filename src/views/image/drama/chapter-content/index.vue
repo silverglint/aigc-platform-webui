@@ -7,10 +7,10 @@ import CommonRole from "./components/CommonRole.vue";
 import TextRole from "./components/TextRole.vue";
 import {Message} from "@arco-design/web-vue";
 import {ROLE_CHANGE} from "@/types/event-types.ts";
-import {getTextChapter, roleInference, stopCreateAudio, TextChapter, TextContentConfig} from "@/api/text-chapter.ts";
+import {getTextChapter, roleInference, stopCreateAudio, ImageDrama, ImageContentConfig} from "@/api/image-chapter.ts";
 import {AudioTaskState, EventTypes, TextProjectType} from "@/types/global.ts";
 import AudioPreview from "@/views/image/drama/chapter-content/components/AudioPreview.vue";
-import {getTextProject, TextProject} from "@/api/text-project.ts";
+import {getImageProject, ImageProject} from "@/api/image-project.ts";
 import ChapterEditModal from "@/views/image/drama/chapter-title/components/ChapterEditModal.vue";
 import GlobalWebsocketService from "@/services/globalWebsocketService.ts";
 import emitter from "@/mitt";
@@ -22,7 +22,7 @@ const {loading, setLoading} = useLoading();
 const emits = defineEmits(['refresh']);
 
 const selectedIndexes = ref<string[]>([])
-const textContentConfig = ref<TextContentConfig>({} as TextContentConfig)
+const imageContentConfig = ref<ImageContentConfig>({} as ImageContentConfig)
 const audioPreviewModelVisible = ref<boolean>(false);
 const chapterEditModalVisible = ref<boolean>(false);
 const roleInferenceModalVisible = ref<boolean>(false);
@@ -130,11 +130,11 @@ const wsDataHandler = (data: any) => {
   }
 }
 
-const textProject = ref<TextProject | null>(null)
-const textChapter = ref<TextChapter | null>(null)
+const textProject = ref<ImageProject | null>(null)
+const textChapter = ref<ImageDrama | null>(null)
 
 const handleQueryProject = async () => {
-  const {data} = await getTextProject({
+  const {data} = await getImageProject({
     projectId: route.query.projectId as string,
   })
   textProject.value = data
@@ -221,7 +221,7 @@ watch(
                     修改部分生成
                   </a-doption>
                   <a-doption
-                      v-if="textContentConfig.edit"
+                      v-if="imageContentConfig.edit"
                       @click="onStartCreateAudio('selected')"
                   >
                     生成选中部分
@@ -234,18 +234,18 @@ watch(
                 <a-button
                     size="small"
                     type="primary"
-                    :status="textContentConfig.edit ? 'warning' : 'normal'"
+                    :status="imageContentConfig.edit ? 'warning' : 'normal'"
                     @click="() => {
-                      if (textContentConfig.edit) {
+                      if (imageContentConfig.edit) {
                         tableContentRef?.handleSelectAllValue(false)
                       }
-                      textContentConfig.edit = !textContentConfig.edit
+                      imageContentConfig.edit = !imageContentConfig.edit
                     }"
                 >
-                  {{ textContentConfig.edit ? '关闭编辑' : '编辑模式' }}
+                  {{ imageContentConfig.edit ? '关闭编辑' : '编辑模式' }}
                 </a-button>
                 <a-dropdown
-                    v-if="textContentConfig.edit"
+                    v-if="imageContentConfig.edit"
                     position="br"
                 >
                   <a-button
@@ -270,7 +270,7 @@ watch(
                 </a-dropdown>
               </a-button-group>
             </div>
-            <div v-if="textContentConfig.edit">
+            <div v-if="imageContentConfig.edit">
               <a-dropdown-button
                   type="primary"
                   size="small"
@@ -356,7 +356,7 @@ watch(
                 </template>
                 <template #content>
                   <a-doption>
-                    <a-checkbox v-model="textContentConfig.showDialogue">标记对话</a-checkbox>
+                    <a-checkbox v-model="imageContentConfig.showDialogue">标记对话</a-checkbox>
                   </a-doption>
                 </template>
               </a-dropdown-button>
@@ -373,7 +373,7 @@ watch(
         >
           <table-content
               ref="tableContentRef"
-              v-model:text-content-config="textContentConfig"
+              v-model:image-content-config="imageContentConfig"
               v-model:selected-indexes="selectedIndexes"
               v-model:creating-ids="creatingIds"
           />

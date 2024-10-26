@@ -62,7 +62,18 @@ export interface TextMarkupInfo {
   polyphonicInfos: PolyphonicInfo[]
 }
 
-export interface ChapterInfo extends AudioRoleInfo {
+export interface DramaInfoInference{
+  id: number;
+  projectId: string;
+  chapterId: string;
+  dramaInfoId:number;
+  textId: string;
+  text: string;
+  timeStart:string;
+  timeEnd:string;
+}
+
+export interface DramaInfo {
   id: number;
   index: string;
   projectId: string;
@@ -70,21 +81,14 @@ export interface ChapterInfo extends AudioRoleInfo {
   paraIndex: number;
   sentIndex: number;
   textId: string;
-  text: string;
-  textLang: string;
+  text: string[];
   textSort: number;
-  dialogueFlag: boolean;
-  audioVolume: number;
-  audioSpeed: number;
-  audioInterval: number;
-  audioLength: number;
-  audioTaskState: number;
-  audioFiles: string;
-  textMarkupInfo: TextMarkupInfo;
+  imageTaskState: number;
+  inferences: DramaInfoInference[];
 }
 
 export function tmpDialogueParse(params: ImageDrama) {
-  return axios.post<ChapterInfo[]>('/api/imageDrama/tmpDialogueParse', params);
+  return axios.post<DramaInfo[]>('/api/imageDrama/tmpDialogueParse', params);
 }
 
 export function chapterEdit(params: ImageDrama) {
@@ -100,7 +104,7 @@ export function chapterSort(params: ImageDrama[]) {
 }
 
 export function chapterInfos(params: { projectId: string, chapterId: string }) {
-  return axios.post<ChapterInfo[]>('/api/imageDrama/chapterInfos', params);
+  return axios.post<DramaInfo[]>('/api/imageDrama/chapterInfos', params);
 }
 
 export function roles(params: { projectId: string, chapterId: string }) {
@@ -211,18 +215,6 @@ export function audioModelChange(params: UpdateModelInfo) {
   return axios.post('/api/imageDrama/audioModelChange', params);
 }
 
-export function updateVolume(params: ChapterInfo) {
-  return axios.post('/api/imageDrama/updateVolume', params);
-}
-
-export function updateSpeed(params: ChapterInfo) {
-  return axios.post('/api/imageDrama/updateSpeed', params);
-}
-
-export function updateInterval(params: ChapterInfo) {
-  return axios.post('/api/imageDrama/updateInterval', params);
-}
-
 export function updateControls(params: {
   projectId: string,
   chapterId: string,
@@ -237,11 +229,11 @@ export function updateControls(params: {
   return axios.post('/api/imageDrama/updateControls', params);
 }
 
-export function updateChapterText(params: ChapterInfo) {
+export function updateChapterText(params: DramaInfo) {
   return axios.post('/api/imageDrama/updateChapterText', params);
 }
 
-export function createAudio(params: ChapterInfo) {
+export function createAudio(params: DramaInfo) {
   return axios.post<string[]>('/api/imageDrama/createAudio', params);
 }
 
@@ -265,35 +257,38 @@ export function chapterExpose(params: {
   combineAudio: boolean;
   subtitle: boolean;
 }) {
-  return axios.post<ChapterInfo>('/api/imageDrama/chapterExpose', params);
+  return axios.post<DramaInfo>('/api/imageDrama/chapterExpose', params);
 }
 
-export function deleteChapterInfo(params: ChapterInfo) {
+export function deleteChapterInfo(params: DramaInfo) {
   return axios.post('/api/imageDrama/deleteChapterInfo', params);
 }
 
-export function addChapterInfo(params: ChapterInfo) {
+export function addChapterInfo(params: DramaInfo) {
   return axios.post('/api/imageDrama/addChapterInfo', params);
 }
 
-export function chapterInfoSort(params: ChapterInfo[]) {
+export function updateDramaInfo(params: DramaInfo) {
+  return axios.post('/api/imageDrama/updateDramaInfo', params);
+}
+
+export function saveDramaInfoInference(params: DramaInfoInference) {
+  return axios.post('/api/imageDrama/saveDramaInfoInference', params);
+}
+
+export function deleteDramaInfoInference(params: DramaInfoInference) {
+  return axios.post('/api/imageDrama/deleteDramaInfoInference', params);
+}
+export function chapterInfoSort(params: DramaInfo[]) {
   return axios.post('/api/imageDrama/chapterInfoSort', params);
 }
 
-export function addPolyphonicInfo(params: PolyphonicInfo & { chapterInfoId: number }) {
-  return axios.post('/api/imageDrama/addPolyphonicInfo', params);
-}
-
-export function removePolyphonicInfo(params: PolyphonicInfo & { chapterInfoId: number }) {
-  return axios.post('/api/imageDrama/removePolyphonicInfo', params);
-}
-
-export function playAudio(params: ChapterInfo) {
+export function playAudio(params: DramaInfo) {
   return customAxios.post('/api/imageDrama/playAudio', params, {responseType: 'blob'});
 }
 
 export function chapterCondition(params: ChapterParam) {
-  return axios.post<ChapterInfo[]>('/api/imageDrama/chapterCondition', params);
+  return axios.post<DramaInfo[]>('/api/imageDrama/chapterCondition', params);
 }
 
 export function getChapterAudio(params: ChapterParam) {

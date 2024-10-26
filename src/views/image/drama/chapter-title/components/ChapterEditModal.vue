@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import {ref, watch} from "vue";
-import {linesPatternOptions} from "@/data/data.ts";
 import {useRoute} from "vue-router";
-import useLoading from "@/hooks/loading.ts";
-import {FormInstance, Message} from "@arco-design/web-vue";
-import {chapterEdit, ChapterInfo, getTextChapter, TextChapter, tmpDialogueParse,} from "@/api/text-chapter.ts";
+import {FileItem, FormInstance, Message} from "@arco-design/web-vue";
+import {chapterEdit, getTextChapter, ImageDrama} from "@/api/image-chapter.ts";
 import {ROLE_CHANGE} from "@/types/event-types.ts";
 import emitter from "@/mitt";
 
@@ -21,35 +19,20 @@ const props = defineProps({
 
 const emits = defineEmits(['update:visible'])
 
-const dialogueParseLoading = useLoading();
-
-const showDialogue = ref<boolean>(true);
-const showAside = ref<boolean>(true);
-const showDialogueTable = ref<boolean>(false);
-
 const showModal = ref<boolean>(false);
-const chapterInfos = ref<ChapterInfo[]>([]);
 const formRef = ref<FormInstance>()
-const form = ref<TextChapter & { validate: boolean }>({
+const form = ref<ImageDrama & { validate: boolean }>({
   dialoguePattern: '',
   validate: false
 } as any);
 
-const handleTmpDialogueParse = async () => {
-  showDialogueTable.value = true;
+const file = ref<FileItem | null>(null);
 
-  const res = await formRef.value?.validate();
-  if (!res) {
-    try {
-      dialogueParseLoading.setLoading(true);
-      const {data} = await tmpDialogueParse(form.value);
-      chapterInfos.value = data;
-      form.value.validate = true;
-    } finally {
-      dialogueParseLoading.setLoading(false);
-    }
-  }
-}
+const onChange = (_: FileItem[], fileItem: FileItem) => {
+  file.value = {
+    ...fileItem,
+  };
+};
 
 const handleQueryChapterText = async () => {
   const {data} = await getTextChapter({
@@ -74,19 +57,13 @@ const handleBeforeOk = async (done: (closed: boolean) => void) => {
 const close = () => {
   emits('update:visible', false);
 }
-
 watch(
     () => props.visible,
     () => {
       showModal.value = props.visible
       if (props.visible) {
         handleQueryChapterText()
-
-        chapterInfos.value = []
         formRef.value?.resetFields();
-        showDialogue.value = true
-        showAside.value = true
-        showDialogueTable.value = false
       }
     },
     {immediate: true}
@@ -97,16 +74,16 @@ watch(
   <div>
     <a-modal
         v-model:visible="showModal"
-        title="章节编辑"
-        :width="1080"
+        title="剧本编辑"
+        :width="512"
         :unmount-on-close="true"
         @before-ok="handleBeforeOk"
         @close="close"
         @cancel="close"
     >
-      <div style="height: 600px; padding: 0 20px">
+      <div style=" padding: 0 20px">
         <a-row :gutter="24">
-          <a-col :span="12">
+          <a-col :span="24">
             <a-form
                 ref="formRef"
                 :model="form"
@@ -117,87 +94,15 @@ watch(
               <a-form-item label="章节标题" field="chapterName" required>
                 <a-input v-model="form.chapterName"/>
               </a-form-item>
-              <a-form-item label="对话解析" field="dialoguePattern">
-                <a-select
-                    v-model="form.dialoguePattern"
-                    allow-create
-                    allow-clear
-                    :options="linesPatternOptions"
-                >
-                </a-select>
-                <a-button
-                    type="primary"
-                    style="margin-left: 10px"
-                    :loading="dialogueParseLoading.loading.value"
-                    @click="handleTmpDialogueParse"
-                >
-                  解析
-                </a-button>
-              </a-form-item>
-              <a-form-item label="章节内容" field="content" required>
-                <n-input
-                    v-model:value="form.content"
-                    type="textarea"
-                    placeholder="章节内容"
-                    :auto-size="{ minRows: 10 }"
-                    show-count
-                    style="height: 500px"
+              <a-form-item label="字幕" required>
+                <a-upload
+                    :auto-upload="false"
+                    :limit="1"
+                    draggable
+                    @change="onChange"
                 />
               </a-form-item>
             </a-form>
-          </a-col>
-          <a-col :span="12">
-            <div v-if="showDialogueTable">
-              <div style="margin-bottom: 15px">
-                <a-checkbox
-                    v-model="showDialogue"
-                    @change="(value: any) => {
-                        if (!value) {
-                          showAside = true
-                        }
-                      }"
-                >
-                  对话
-                </a-checkbox>
-                <a-checkbox
-                    v-model="showAside"
-                    @change="(value: any) => {
-                        if (!value) {
-                          showDialogue = true
-                        }
-                      }"
-                >
-                  非对话
-                </a-checkbox>
-              </div>
-              <n-scrollbar style="height: 560px; padding-right: 10px">
-                <a-table
-                    :data="chapterInfos
-                    .filter((item: any) => (item.dialogueFlag && showDialogue) || (!item.dialogueFlag && showAside))
-                  "
-                    :loading="dialogueParseLoading.loading.value"
-                    :columns="[
-                        { title: 'index', slotName: 'index' },
-                        { title: '文本', dataIndex: 'text' },
-                        {title: '对话', slotName: 'dialogueFlag' }
-                        ]"
-                    :bordered="{cell:true}"
-                    :pagination="false"
-                >
-                  <template #index="{ rowIndex }">
-                    {{ rowIndex + 1 }}
-                  </template>
-                  <template #dialogueFlag="{ record }">
-                    <a-tag v-if="record.dialogueFlag" color="green" size="small">
-                      <icon-check-circle-fill/>
-                    </a-tag>
-                    <a-tag v-else size="small">
-                      <icon-close-circle/>
-                    </a-tag>
-                  </template>
-                </a-table>
-              </n-scrollbar>
-            </div>
           </a-col>
         </a-row>
       </div>

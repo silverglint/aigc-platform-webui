@@ -3,7 +3,7 @@ import {ref, watch} from "vue";
 import {useRoute} from "vue-router";
 import useLoading from "@/hooks/loading.ts";
 import {FileItem, FormInstance, Message} from "@arco-design/web-vue";
-import {chapterAdd, ChapterInfo, chapters4Sort as queryTextChapterList, ImageDrama,} from "@/api/image-chapter.ts";
+import {chapterAdd, DramaInfo, chapters4Sort as queryTextChapterList, ImageDrama,} from "@/api/image-chapter.ts";
 import {ROLE_CHANGE} from "@/types/event-types.ts";
 import emitter from "@/mitt";
 
@@ -17,7 +17,6 @@ const props = defineProps({
 
 const emits = defineEmits(['update:visible'])
 
-const dialogueParseLoading = useLoading();
 const chapterSortLoading = useLoading();
 
 const showDialogue = ref<boolean>(true);
@@ -31,7 +30,7 @@ const imageDramas = ref<ImageDrama[]>([]);
 const sortChanged = ref(false)
 
 const showModal = ref<boolean>(false);
-const chapterInfos = ref<ChapterInfo[]>([]);
+const chapterInfos = ref<DramaInfo[]>([]);
 const formRef = ref<FormInstance>()
 const form = ref<ImageDrama & { validate: boolean }>({
   validate: false

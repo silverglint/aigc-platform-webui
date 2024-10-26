@@ -40,4 +40,8 @@ const themeOverrides: GlobalThemeOverrides = {
 :deep(.arco-typography-edit-content) {
   margin: 0;
 }
+
+:deep(.n-scrollbar-content){
+  height: 100%;
+}
 </style>
