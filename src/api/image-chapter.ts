@@ -1,5 +1,4 @@
 import axios from '@/axios/default-axios.ts';
-import {AudioModelInfo, AudioModelInfoKey, AudioRoleInfo} from "@/api/model.ts";
 import {FetchStream, IFetchStreamOptions} from "@/api/stream.ts";
 import {Pagination, PaginationResp} from "@/types/global.ts";
 import customAxios from "@/axios/custom-axios.ts";
@@ -45,12 +44,14 @@ export function getTextChapter(params: ChapterParam) {
   return axios.post<ImageDrama>('/api/imageDrama/getTextChapter', params);
 }
 
-export interface TextRole extends AudioRoleInfo, AudioModelInfo {
+export interface ImageRole {
   id: number;
   projectId: string;
   chapterId?: string;
   roleCount: number;
   coverCommonRole: boolean;
+  role: string;
+  imagePrompt: string;
 }
 
 export interface PolyphonicInfo {
@@ -108,14 +109,14 @@ export function chapterInfos(params: { projectId: string, chapterId: string }) {
 }
 
 export function roles(params: { projectId: string, chapterId: string }) {
-  return axios.post<TextRole[]>('/api/imageDrama/roles', params);
+  return axios.post<ImageRole[]>('/api/imageDrama/roles', params);
 }
 
-export function updateRole(params: TextRole) {
+export function updateRole(params: ImageRole) {
   return axios.post('/api/imageDrama/updateRole', params);
 }
 
-export function updateRoleModel(params: UpdateModelInfo) {
+export function updateRoleModel(params: ImageRole) {
   return axios.post('/api/imageDrama/updateRoleModel', params);
 }
 
@@ -139,23 +140,23 @@ export function textRoleChange(params: {
   return axios.post('/api/imageDrama/textRoleChange', params);
 }
 
-export function saveToCommonRole(params: TextRole) {
+export function saveToCommonRole(params: ImageRole) {
   return axios.post('/api/imageDrama/saveToCommonRole', params);
 }
 
 export function commonRoles(params: { projectId: string }) {
-  return axios.post<TextRole[]>('/api/imageDrama/commonRoles', params);
+  return axios.post<ImageRole[]>('/api/imageDrama/commonRoles', params);
 }
 
-export function createCommonRole(params: TextRole) {
+export function createCommonRole(params: ImageRole) {
   return axios.post('/api/imageDrama/createCommonRole', params);
 }
 
-export function updateCommonRole(params: UpdateModelInfo) {
+export function updateCommonRole(params: ImageRole) {
   return axios.post('/api/imageDrama/updateCommonRole', params);
 }
 
-export function deleteCommonRole(params: TextRole) {
+export function deleteCommonRole(params: ImageRole) {
   return axios.post('/api/imageDrama/deleteCommonRole', params);
 }
 
@@ -205,14 +206,6 @@ export function queryRoleInferenceCache(params: { projectId: string, chapterId: 
 export interface ChapterParam {
   projectId?: string;
   chapterId?: string;
-}
-
-export interface UpdateModelInfo extends ChapterParam, AudioModelInfoKey {
-  ids?: number[]
-}
-
-export function audioModelChange(params: UpdateModelInfo) {
-  return axios.post('/api/imageDrama/audioModelChange', params);
 }
 
 export function updateControls(params: {
