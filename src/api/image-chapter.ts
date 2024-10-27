@@ -237,13 +237,13 @@ export function createAudio(params: DramaInfo) {
   return axios.post<string[]>('/api/imageDrama/createAudio', params);
 }
 
-export function startCreateAudio(params: {
+export function startCreateImage(params: {
   projectId: string,
   chapterId: string,
   actionType: string,
   chapterInfoIds: number[],
 }) {
-  return axios.post<string[]>('/api/imageDrama/startCreateAudio', params);
+  return axios.post<string[]>('/api/imageDrama/startCreateImage', params);
 }
 
 export function stopCreateAudio() {

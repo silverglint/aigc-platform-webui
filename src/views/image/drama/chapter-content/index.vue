@@ -34,7 +34,7 @@ const tableContentRef = ref<
       playAllAudio: Function,
       handleSelectAllValue: Function,
       handleConditionSelect: Function,
-      handleAudioGenerate: Function,
+      handleImageGenerate: Function,
 
       handleBatchRoleChange: Function,
       handleBatchModelChange: Function,
@@ -125,7 +125,7 @@ const handleImageInference = (param: any) => {
 
 const aiResultModalVisible = ref<boolean>(false);
 
-const onStartCreateAudio = (actionType: 'all' | 'modified' | 'selected') => {
+const onStartCreateImage = (actionType: 'all' | 'modified' | 'selected') => {
   tableContentRef.value?.handleAudioGenerate(actionType)
 }
 
@@ -229,25 +229,18 @@ watch(
             <div>
               <a-dropdown-button type="primary"
                                  size="small">
-                音频生成
+                图片生成
                 <template #icon>
                   <icon-down/>
                 </template>
                 <template #content>
-                  <a-doption
-                      @click="onStartCreateAudio('all')"
-                  >
+                  <a-doption @click="onStartCreateImage('all')">
                     全部重新生成
                   </a-doption>
-                  <a-doption
-                      @click="onStartCreateAudio('modified')"
-                  >
+                  <a-doption @click="onStartCreateImage('modified')">
                     修改部分生成
                   </a-doption>
-                  <a-doption
-                      v-if="imageContentConfig.edit"
-                      @click="onStartCreateAudio('selected')"
-                  >
+                  <a-doption @click="onStartCreateImage('selected')">
                     生成选中部分
                   </a-doption>
                 </template>

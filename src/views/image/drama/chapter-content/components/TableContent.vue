@@ -16,7 +16,7 @@ import {
   ImageRole,
   roles as queryRoles,
   saveDramaInfoInference,
-  startCreateAudio,
+  startCreateImage,
   updateDramaInfo
 } from "@/api/image-chapter.ts";
 import {AudioTaskState, EventTypes} from "@/types/global.ts";
@@ -323,8 +323,8 @@ const handleConditionSelect = (value: boolean) => {
   conditionSelectVisible.value = value
 }
 
-const handleStartCreateAudio = async (actionType: string, chapterInfoIds: number[]) => {
-  await startCreateAudio({
+const handleStartCreateImage = async (actionType: string, chapterInfoIds: number[]) => {
+  await startCreateImage({
     projectId: route.query.projectId as string,
     chapterId: route.query.chapterId as string,
     actionType: actionType,
@@ -332,7 +332,7 @@ const handleStartCreateAudio = async (actionType: string, chapterInfoIds: number
   });
 }
 
-const handleAudioGenerate = (actionType: 'all' | 'modified' | 'selected') => {
+const handleImageGenerate = (actionType: 'all' | 'modified' | 'selected') => {
   selectedIds.value = dramaInfos.value
       .filter((item) => item.selected)
       .map((item) => item.id);
@@ -351,7 +351,7 @@ const handleAudioGenerate = (actionType: 'all' | 'modified' | 'selected') => {
               : `生成选中部分(${selectedIds.value.length})？`,
       content: '',
       onOk() {
-        handleStartCreateAudio(actionType, selectedIds.value);
+        handleStartCreateImage(actionType, selectedIds.value);
       },
     })
   }
@@ -361,7 +361,7 @@ const handleAudioGenerate = (actionType: 'all' | 'modified' | 'selected') => {
 defineExpose({
   handleSelectAllValue,
   handleConditionSelect,
-  handleAudioGenerate,
+  handleImageGenerate,
 
   handleBatchRoleChange,
   handleBatchModelChange,
