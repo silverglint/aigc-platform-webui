@@ -4,7 +4,7 @@ import ChapterTitle from "@/views/image/drama/chapter-title/index.vue";
 import ChapterContent from "@/views/image/drama/chapter-content/index.vue";
 import {useRoute} from "vue-router";
 import {TextProjectType} from "@/types/global.ts";
-import {createTextWebsocketService} from "@/services/textWebsocketService.ts";
+import {createImageWebsocketService} from "@/services/imageWebsocketService.ts";
 
 const route = useRoute();
 
@@ -13,16 +13,16 @@ const toggleCollapse = (value: boolean) => {
   collapsed.value = value;
 }
 
-const textWebsocketService = createTextWebsocketService();
+const imageWebsocketService = createImageWebsocketService();
 
 onMounted(() => {
   if (route.query.projectId) {
-    textWebsocketService.connect(route.query.projectId as string);
+    imageWebsocketService.connect(route.query.projectId as string);
   }
 })
 
 onUnmounted(() => {
-  textWebsocketService.disconnect();
+  imageWebsocketService.disconnect();
 });
 
 </script>
@@ -31,7 +31,7 @@ onUnmounted(() => {
   <div style="display: flex; padding: 20px">
     <div
         v-show="route.query.projectType as string === TextProjectType.long_text"
-        :style="!collapsed && {width: '240px'}"
+        :style="!collapsed && {width: '200px'}"
     >
       <chapter-title @toggle-collapse="toggleCollapse"/>
     </div>

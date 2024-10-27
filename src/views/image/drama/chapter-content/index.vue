@@ -7,7 +7,7 @@ import CommonRole from "./components/CommonRole.vue";
 import TextRole from "./components/TextRole.vue";
 import {Message} from "@arco-design/web-vue";
 import {getTextChapter, ImageContentConfig, ImageDrama, roleInference, stopCreateAudio} from "@/api/image-chapter.ts";
-import {AudioTaskState, EventTypes, TextProjectType} from "@/types/global.ts";
+import {EventTypes, TextProjectType} from "@/types/global.ts";
 import AudioPreview from "@/views/image/drama/chapter-content/components/AudioPreview.vue";
 import {getImageProject, ImageProject} from "@/api/image-project.ts";
 import ChapterEditModal from "@/views/image/drama/chapter-title/components/ChapterEditModal.vue";
@@ -126,12 +126,7 @@ const handleImageInference = (param: any) => {
 const aiResultModalVisible = ref<boolean>(false);
 
 const onStartCreateImage = (actionType: 'all' | 'modified' | 'selected') => {
-  tableContentRef.value?.handleAudioGenerate(actionType)
-}
-
-const playAllAudio = () => {
-  tableContentRef.value?.playAllAudio(playStartIndex.value)
-  playStartIndex.value = ''
+  tableContentRef.value?.handleImageGenerate(actionType)
 }
 
 const stopLoading = ref<boolean>(false);
@@ -312,43 +307,6 @@ watch(
                   <a-doption @click="tableContentRef?.handleCombineExport()">
                     合并导出
                   </a-doption>
-                  <a-doption @click="tableContentRef?.handleMarkupDialogue(true)">
-                    标记对话
-                  </a-doption>
-                  <a-doption @click="tableContentRef?.handleMarkupDialogue(false)">
-                    取消标记
-                  </a-doption>
-                  <a-doption @click="tableContentRef?.handleBatchDelete()">
-                    批量删除
-                  </a-doption>
-                </template>
-              </a-dropdown-button>
-            </div>
-            <div>
-              <a-dropdown-button
-                  type="primary"
-                  size="small"
-              >
-                音频播放
-                <template #icon>
-                  <icon-down/>
-                </template>
-                <template #content>
-                  <a-doption @click="playAllAudio">
-                    <div style="display: flex; align-items: center">
-                      <a-input v-model="playStartIndex" placeholder="0-0" size="small" style="width: 100px"
-                               @click.stop/>
-                      <div style="margin-left: 10px">
-                        顺序播放
-                      </div>
-                    </div>
-                  </a-doption>
-                  <a-doption
-                      v-if="textChapter?.audioTaskState === AudioTaskState.combined"
-                      @click="audioPreviewModelVisible = true"
-                  >
-                    音频预览
-                  </a-doption>
                 </template>
               </a-dropdown-button>
             </div>
@@ -359,24 +317,10 @@ watch(
                     size="small"
                     status="danger"
                     :loading="stopLoading"
-                    @click="handleStopCreateAudio"
-                >
+                    @click="handleStopCreateAudio">
                   停止
                 </a-button>
               </a-space>
-            </div>
-            <div>
-              <a-dropdown-button size="small">
-                其他
-                <template #icon>
-                  <icon-down/>
-                </template>
-                <template #content>
-                  <a-doption>
-                    <a-checkbox v-model="imageContentConfig.showDialogue">标记对话</a-checkbox>
-                  </a-doption>
-                </template>
-              </a-dropdown-button>
             </div>
           </a-space>
         </div>
@@ -393,7 +337,7 @@ watch(
         </a-scrollbar>
       </div>
       <a-divider direction="vertical" style="margin: 0"/>
-      <div style="width: 20%; margin-left: 10px">
+      <div style="width: 15%; margin-left: 10px">
         <a-scrollbar style="max-height: calc(100vh - 90px); overflow: auto">
           <a-card :bordered="false" style="border-radius: 8px" :body-style="{ padding: '0 10px 0 0' }">
             <n-tabs default-value="1"

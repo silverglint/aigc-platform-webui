@@ -14,6 +14,7 @@ import {
   DramaInfoInference,
   ImageContentConfig,
   ImageRole,
+  queryDramaInfo,
   roles as queryRoles,
   saveDramaInfoInference,
   startCreateImage,
@@ -48,6 +49,8 @@ const dramaInfos = ref<(DramaInfo &
       showAudioCard: boolean,
       newItem: boolean,
       selected: boolean,
+      currentImgIndex: number,
+      previewImageFileArr: string[]
     }
     )[]>([]);
 
@@ -72,6 +75,8 @@ const handleQueryChapterInfo = async () => {
       showAudioCard: false,
       newItem: false,
       selected: false,
+      currentImgIndex: item.finalImageFiles && item.previewImageFiles ? item.previewImageFiles.split(';').indexOf(item.finalImageFiles) : 999,
+      previewImageFileArr: item.previewImageFiles?.split(';')
     }
   });
 }
@@ -184,6 +189,23 @@ const removeTextItem = async (index: number, targetIndex: number) => {
   }
 }
 
+const imageGenerateResult = (data) => {
+  let dramaInfo = dramaInfos.value.filter((item) => item.index === data.imgId)?.[0];
+  if (dramaInfo) handleQueryDramaInfo(dramaInfo)
+}
+
+const handleQueryDramaInfo = async (dramaInfo: DramaInfo) => {
+  queryDramaInfo(dramaInfo).then(res => {
+        let find = dramaInfos.value.find(item => item.id === res.data.id);
+        if (find) {
+          find.previewImageFiles = res.data.previewImageFiles;
+          find.previewImageFileArr = res.data.previewImageFiles?.split(';')
+          find.random = Math.random()
+        }
+      }
+  )
+}
+
 const handleRoleCheck = (dramaInfo: DramaInfo, role: ImageRole, bool: boolean) => {
   let roles = dramaInfo.role?.split(',') || []
   if (bool) {
@@ -232,6 +254,18 @@ const handleSelectAllValue = (value: boolean) => {
           selected: value
         }
       })
+}
+
+const chooseFinalImg = async (dramaInfo: DramaInfo, imgName: string) => {
+  dramaInfo.finalImageFiles = imgName;
+  await updateDramaInfo(dramaInfo)
+  queryDramaInfo(dramaInfo).then(res => {
+        let find = dramaInfos.value.find(item => item.id === res.data.id);
+        if (find) {
+          find.finalImageFiles = res.data.finalImageFiles;
+        }
+      }
+  )
 }
 
 const handleBatchOperator = (onSuccess: () => void) => {
@@ -377,6 +411,7 @@ onMounted(() => {
   emitter?.on(COMMON_ROLE_CHANGE, handleQueryRoles);
   emitter?.on(EventTypes.chapter_info_refresh, handleQueryChapterInfo);
   emitter?.on(EventTypes.audio_generate_result, wsDataHandler);
+  emitter?.on(EventTypes.image_generate_result, imageGenerateResult)
 });
 
 onBeforeUnmount(() => {
@@ -407,7 +442,7 @@ watch(
       <div v-for="(item, index) in dramaInfos"
            :key="item.id"
            class="flex bg-gray-500/5 rounded">
-        <div style="width: 100%; display: flex; align-items: center;height: 5.5rem;">
+        <div style="width: 100%; display: flex; align-items: center;height: 8rem;">
           <div v-if="props.imageContentConfig.edit"
                style="width: 24px; height: 100%;" class="text-card-left-option">
             <div style="height: 100%; display: flex; place-items: center; justify-content: center;align-items: center;">
@@ -447,12 +482,36 @@ watch(
               </a-tag>
             </div>
             <a-divider direction="vertical"/>
-            <div style="width: 300px;height: 100%;overflow: auto;">
-              <a-textarea v-model="item.imagePrompt" :auto-size="{minRows: 3, maxRows: 3}"/>
+            <div style="width: 300px;height: 100%;">
+              <a-textarea v-model="item.imagePrompt"
+                          show-word-limit
+                          allow-clear
+                          style="height: 100%"
+                          @change="handleUpdateDramaInfo(item)"/>
+            </div>
+            <a-divider direction="vertical"/>
+            <div style="width: 400px;height: 100%;overflow: auto;">
+              <a-image-preview-group v-if="item.previewImageFileArr&&item.previewImageFileArr.length>0"
+                                     v-model:current="item.currentImgIndex"
+                                     :actions-layout="['']">
+                <a-space style="padding: 4px">
+                  <a-image v-for="(img,i) in item.previewImageFileArr"
+                           @click.right.prevent="chooseFinalImg(item,item.previewImageFileArr[i])"
+                           :class="item.finalImageFiles===item.previewImageFileArr[i]?'selected-image':''"
+                           :src="'/api/projectDirResource/image/'+route.query.projectName+'/'+route.query.chapterName+'/previewImages/'+img+'?tmp='+item.random"
+                           width="160">
+                  </a-image>
+                </a-space>
+                <template #actions>
+                  <a-image-preview-action name="选择为最终图" @click="chooseFinalImg(item,item.previewImageFileArr[item.currentImgIndex])">
+                    选择为最终图
+                  </a-image-preview-action>
+                </template>
+              </a-image-preview-group>
             </div>
           </div>
           <div v-if="props.imageContentConfig.edit"
-               style="width: 28px; margin-right: 10px;height: 100%;display: flex;flex-direction: column;flex-wrap: wrap">
+               style="width: 28px; margin:0 10px;height: 100%;display: flex;flex-direction: column;flex-wrap: wrap">
             <div style="height: 50%;width: 14px; display: flex; place-items: center; justify-content: center"
                  class="add-other-item"
                  title="向上合并"
@@ -503,4 +562,7 @@ watch(
   padding-left: 0;
 }
 
+.selected-image {
+  outline: #32ff0e 5px solid;
+}
 </style>

@@ -35,6 +35,10 @@ export enum EventTypes {
 
   audio_generate_result = 'audio_generate_result',
   audio_generate_summary = 'audio_generate_summary',
+
+  image_generate_start = 'image_generate_start',
+  image_generate_progress = 'image_generate_progress',
+  image_generate_result = 'image_generate_result',
 }
 
 export enum TextProjectType {

@@ -64,15 +64,15 @@ export interface TextMarkupInfo {
   polyphonicInfos: PolyphonicInfo[]
 }
 
-export interface DramaInfoInference{
+export interface DramaInfoInference {
   id: number;
   projectId: string;
   chapterId: string;
-  dramaInfoId:number;
+  dramaInfoId: number;
   textId: string;
   text: string;
-  timeStart:string;
-  timeEnd:string;
+  timeStart: string;
+  timeEnd: string;
 }
 
 export interface DramaInfo {
@@ -87,12 +87,11 @@ export interface DramaInfo {
   textSort: number;
   role: string;
   imagePrompt: string;
+  previewImageFiles: string;
+  finalImageFiles: string;
   imageTaskState: number;
   inferences: DramaInfoInference[];
-}
-
-export function tmpDialogueParse(params: ImageDrama) {
-  return axios.post<DramaInfo[]>('/api/imageDrama/tmpDialogueParse', params);
+  random?: number;
 }
 
 export function chapterEdit(params: ImageDrama) {
@@ -109,6 +108,10 @@ export function chapterSort(params: ImageDrama[]) {
 
 export function chapterInfos(params: { projectId: string, chapterId: string }) {
   return axios.post<DramaInfo[]>('/api/imageDrama/chapterInfos', params);
+}
+
+export function queryDramaInfo(params: DramaInfo) {
+  return axios.post('/api/imageDrama/queryDramaInfo', params);
 }
 
 export function roles(params: { projectId: string, chapterId: string }) {
@@ -279,6 +282,7 @@ export function saveDramaInfoInference(params: DramaInfoInference) {
 export function deleteDramaInfoInference(params: DramaInfoInference) {
   return axios.post('/api/imageDrama/deleteDramaInfoInference', params);
 }
+
 export function chapterInfoSort(params: DramaInfo[]) {
   return axios.post('/api/imageDrama/chapterInfoSort', params);
 }
