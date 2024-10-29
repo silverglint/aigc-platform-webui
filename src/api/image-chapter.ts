@@ -253,14 +253,18 @@ export function stopCreateAudio() {
   return axios.post('/api/imageDrama/stopCreateAudio');
 }
 
-export function chapterExpose(params: {
-  projectId: string,
-  chapterId: string,
-  chapterInfoIds: number[],
-  combineAudio: boolean;
-  subtitle: boolean;
-}) {
-  return axios.post<DramaInfo>('/api/imageDrama/chapterExpose', params);
+export interface keyFrameConfig {
+  random: boolean;
+  loop: string[];
+  scale: number;
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+export function dramaExpose(params) {
+  return axios.post<DramaInfo>('/api/imageDrama/dramaExpose', params);
 }
 
 export function deleteChapterInfo(params: DramaInfo) {

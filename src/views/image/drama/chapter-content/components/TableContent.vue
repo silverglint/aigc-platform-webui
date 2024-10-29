@@ -22,6 +22,8 @@ import {
 } from "@/api/image-chapter.ts";
 import {AudioTaskState, EventTypes} from "@/types/global.ts";
 import emitter from "@/mitt";
+import ConditionSelect from "@/views/image/drama/chapter-content/components/ConditionSelect.vue";
+import CombineExport from "@/views/image/drama/chapter-content/components/CombineExport.vue";
 
 const route = useRoute();
 const props = defineProps({
@@ -305,9 +307,7 @@ const handleAudioParamsChange = () => {
 }
 
 const handleCombineExport = () => {
-  handleBatchOperator(() => {
-    combineExportModalVisible.value = true;
-  });
+  combineExportModalVisible.value = true;
 }
 
 const handleMarkupDialogue = (dialogueFlag: boolean) => {
@@ -541,6 +541,14 @@ watch(
         <a-divider/>
       </div>
     </div>
+
+    <combine-export
+        v-model:visible="combineExportModalVisible"
+    />
+    <condition-select
+        v-model:visible="conditionSelectVisible"
+        @select="onConditionSelect"
+    />
   </div>
 </template>
 

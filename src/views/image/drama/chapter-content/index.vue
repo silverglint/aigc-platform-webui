@@ -282,11 +282,9 @@ watch(
                 </a-dropdown>
               </a-button-group>
             </div>
-            <div v-if="imageContentConfig.edit">
-              <a-dropdown-button
-                  type="primary"
-                  size="small"
-              >
+            <div>
+              <a-dropdown-button type="primary"
+                                 size="small">
                 批量处理
                 <template #icon>
                   <icon-down/>
@@ -305,7 +303,7 @@ watch(
                     音频参数
                   </a-doption>
                   <a-doption @click="tableContentRef?.handleCombineExport()">
-                    合并导出
+                    剪映草稿
                   </a-doption>
                 </template>
               </a-dropdown-button>
